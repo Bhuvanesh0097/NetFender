@@ -1,22 +1,24 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Phish Hunter AI API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: messages
+    description: Message analysis operations
+  - name: mailbox
+    description: Mailbox connection and scanning operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +26,135 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /messages/analyze:
+    post:
+      operationId: analyzeMessages
+      tags: [messages]
+      summary: Analyze messages for phishing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeMessagesRequest"
+      responses:
+        "200":
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeMessagesResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages:
+    get:
+      operationId: getMessages
+      tags: [messages]
+      summary: Get all analyzed messages
+      parameters:
+        - name: label
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [phishing, suspicious, safe]
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [email, sms]
+      responses:
+        "200":
+          description: List of analyzed messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMessagesResponse"
+
+  /messages/{id}:
+    delete:
+      operationId: deleteMessage
+      tags: [messages]
+      summary: Delete a message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Message deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /messages/stats:
+    get:
+      operationId: getMessageStats
+      tags: [messages]
+      summary: Get message statistics
+      responses:
+        "200":
+          description: Message statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageStats"
+
+  /mailbox/test:
+    post:
+      operationId: testMailboxConnection
+      tags: [mailbox]
+      summary: Test IMAP mailbox connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailboxCredentials"
+      responses:
+        "200":
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MailboxTestResult"
+        "400":
+          description: Connection failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /mailbox/scan:
+    post:
+      operationId: scanMailbox
+      tags: [mailbox]
+      summary: Scan mailbox and analyze all emails for phishing (SSE stream)
+      description: Connects to the mailbox via IMAP, fetches emails, analyzes each one, and streams progress via Server-Sent Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailboxScanRequest"
+      responses:
+        "200":
+          description: SSE stream of scan progress and results
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +165,228 @@ components:
       required:
         - status
 
+    MessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+          enum: [email, sms]
+        sender:
+          type: string
+      required:
+        - content
+        - type
+
+    AnalyzeMessagesRequest:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageInput"
+          minItems: 1
+      required:
+        - messages
+
+    AnalyzedMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        type:
+          type: string
+          enum: [email, sms]
+        sender:
+          type: string
+          nullable: true
+        label:
+          type: string
+          enum: [phishing, suspicious, safe]
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        explanation:
+          type: string
+        signals:
+          type: array
+          items:
+            type: string
+        urls:
+          type: array
+          items:
+            type: string
+        analyzedAt:
+          type: string
+          format: date-time
+        subject:
+          type: string
+          nullable: true
+          description: Email subject line (for emails from mailbox)
+      required:
+        - id
+        - content
+        - type
+        - label
+        - riskScore
+        - explanation
+        - signals
+        - urls
+        - analyzedAt
+
+    AnalyzeMessagesResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyzedMessage"
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+            phishing:
+              type: integer
+            suspicious:
+              type: integer
+            safe:
+              type: integer
+          required:
+            - total
+            - phishing
+            - suspicious
+            - safe
+      required:
+        - results
+        - summary
+
+    GetMessagesResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyzedMessage"
+        total:
+          type: integer
+      required:
+        - messages
+        - total
+
+    MessageStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        phishing:
+          type: integer
+        suspicious:
+          type: integer
+        safe:
+          type: integer
+        emailCount:
+          type: integer
+        smsCount:
+          type: integer
+      required:
+        - total
+        - phishing
+        - suspicious
+        - safe
+        - emailCount
+        - smsCount
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+      required:
+        - error
+
+    MailboxCredentials:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email address
+        password:
+          type: string
+          description: Email password or App Password (for Gmail/Outlook with 2FA)
+        host:
+          type: string
+          description: IMAP server host (e.g. imap.gmail.com)
+        port:
+          type: integer
+          description: IMAP port (usually 993 for SSL)
+          default: 993
+        tls:
+          type: boolean
+          description: Use TLS/SSL
+          default: true
+        folder:
+          type: string
+          description: Mailbox folder to scan
+          default: INBOX
+      required:
+        - email
+        - password
+        - host
+
+    MailboxTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        emailCount:
+          type: integer
+          description: Total number of emails in the mailbox
+      required:
+        - success
+        - message
+
+    MailboxScanRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+          default: 993
+        tls:
+          type: boolean
+          default: true
+        folder:
+          type: string
+          default: INBOX
+        limit:
+          type: integer
+          description: Max number of emails to scan (most recent first). 0 = all.
+          default: 100
+      required:
+        - email
+        - password
+        - host

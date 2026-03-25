@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --font-display: 'Chakra Petch', sans-serif;
+  --font-body: 'Sora', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-panel: hsl(var(--panel));
+  
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-safe: hsl(var(--safe));
+  --color-safe-foreground: hsl(var(--safe-foreground));
+  --color-safe-glow: hsl(var(--safe-glow));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-glow: hsl(var(--warning-glow));
+
+  --color-danger: hsl(var(--danger));
+  --color-danger-foreground: hsl(var(--danger-foreground));
+  --color-danger-glow: hsl(var(--danger-glow));
+
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.5rem;
+  
+  --animate-pulse-fast: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scan: scan 3s linear infinite;
+}
+
+:root {
+  /* Dark Cybersecurity Theme */
+  --background: 225 30% 4%;
+  --foreground: 210 40% 98%;
+  --panel: 225 25% 7%;
+  
+  --border: 225 20% 16%;
+  --input: 225 25% 10%;
+  --ring: 190 90% 50%;
+
+  --primary: 190 90% 50%; /* Neon Cyan */
+  --primary-foreground: 225 30% 4%;
+
+  --secondary: 225 20% 16%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 225 20% 12%;
+  --muted-foreground: 215 20% 65%;
+
+  /* Semantic Colors */
+  --safe: 151 100% 40%; /* Neon Green */
+  --safe-foreground: 151 100% 10%;
+  --safe-glow: 151 100% 40% / 0.2;
+
+  --warning: 42 100% 50%; /* Amber/Yellow */
+  --warning-foreground: 42 100% 10%;
+  --warning-glow: 42 100% 50% / 0.2;
+
+  --danger: 350 100% 58%; /* Crimson Red */
+  --danger-foreground: 0 0% 100%;
+  --danger-glow: 350 100% 58% / 0.25;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-body antialiased min-h-screen selection:bg-primary/30 selection:text-primary-foreground;
+    /* Subtle noise texture overlay */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight uppercase;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-panel/80 backdrop-blur-xl border border-white/5 shadow-2xl;
+  }
+  
+  .cyber-border {
+    position: relative;
+  }
+  
+  .cyber-border::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid theme('colors.white / 10%');
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  
+  .cyber-border::after {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px;
+    width: 8px; height: 8px;
+    border-top: 2px solid theme('colors.primary');
+    border-left: 2px solid theme('colors.primary');
+    pointer-events: none;
+    border-top-left-radius: inherit;
+  }
+
+  .scrollbar-cyber::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-cyber::-webkit-scrollbar-track {
+    background: theme('colors.background');
+  }
+  .scrollbar-cyber::-webkit-scrollbar-thumb {
+    background: theme('colors.border');
+    border-radius: 3px;
+  }
+  .scrollbar-cyber::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.primary / 50%');
+  }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}

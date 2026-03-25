@@ -16,17 +16,29 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Application: PhishHunter.AI
+
+A phishing defense application that scans emails (via IMAP) and SMS messages (via USB/ADB) for threats using rule-based detection and OpenAI AI analysis.
+
+### Key Features
+- **Email scanning**: Connects to any IMAP mailbox and scans emails newest-first
+- **SMS scanning**: Reads SMS from Android phones via USB/ADB, or accepts manual paste/file import
+- **AI analysis**: OpenAI GPT phishing detection with rule-based pre-screening
+- **Dashboard**: Real-time threat stats with phishing/suspicious/safe categorization
+
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
+├── artifacts/
+│   ├── phish-hunter/       # React+Vite frontend (PhishHunter.AI dashboard)
 │   └── api-server/         # Express API server
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
+│   ├── db/                 # Drizzle ORM schema + DB connection
+│   └── integrations-openai-ai-server/  # OpenAI client via Replit AI Integrations
 ├── scripts/                # Utility scripts (single workspace package)
 │   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
 ├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)

@@ -1,0 +1,40 @@
+This is the complete course code of our project which is built in antigravity. now read this file deeply so that we can change and modify something with the help of you. after completely studing this file execute the given below task to built it:
+Task1:
+current working state: now currently this AI randomly fetches data from mailbox according to the scan limit and for sms also it fetches ramdom sms but not fetches recently received incoming emails or sms .
+
+updated working state: in this AI should fetch emails and sms which is received recently that is incoming mails ans sms. in simple words "it needs to retrive mails and sms which received in latest moment."
+
+the main difference is the current working state doesnt fetch recent mails and sms it fetches mails and sms randomly but updated working state will retrive mails and sms which received latestly.
+
+start building Updated working state.
+
+ROLE: You are an 25 years experienced senior full stack engineer and developer.(current futuristic dev & enginneer)
+
+TASK:
+now,look at the 2nd image : Called as "Threat scanner".So,remove this system completely without affecting and distrubing anyother things.
+
+NOTE:
+with zero disruption.It is compulsory to remove.
+
+Now,look at the 1st image: This system is called as "SMS Threat scanner".Its an mandactory system.So,place this system in the place of removed system called "Threat scanner".
+
+This systems working and functionalities are same as Email (connect real mailbox)functions.
+
+Conclusion:
+Hence,remove the "Threat scanner" system and replace with it "SMS threat scanner" system(this step is mandactory so,never skip it).But,keep in your mind as a strict reminder that don't disturb any exiscting things.
+
+The functions and working system are exactly same as like "Connect real mailbox" for this system also "SMS threat scanner"(never skip step)
+
+Final instruction to must notice:
+Fisrt thing,think logically,analyze deeply and accurate perfect output.
+
+After,each step of execution remind "check whether are u going in an rigth path and satisfying given tasks accuratley.
+
+Keep in your mind that at the end of the each step of execution process ,analyze deeply and check whether that am i going on the right path with accurate task completions.
+
+Just execute what i gave in the task.
+
+don't and never think out of the task given.just keep a hyper focus on your tasks.
+
+For your strong tip:
+Breakdown the given tasks into step by step process to complete with high clarity and accurate task completion.

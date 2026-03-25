@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Phish Hunter AI"
+version = "1.0.0"
+id = "artifacts/phish-hunter"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21557
+
+[services.development]
+run = "pnpm --filter @workspace/phish-hunter run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/phish-hunter", "run", "build" ]
+publicDir = "artifacts/phish-hunter/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21557"
+BASE_PATH = "/"
