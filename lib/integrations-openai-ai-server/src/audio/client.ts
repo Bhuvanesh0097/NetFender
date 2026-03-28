@@ -6,22 +6,16 @@ import { randomUUID } from "crypto";
 import { tmpdir } from "os";
 import { join } from "path";
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_BASE_URL must be set. Did you forget to provision the OpenAI AI integration?",
-  );
+const audioApiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+const audioBaseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+
+if (!audioBaseURL || !audioApiKey) {
+  console.warn("[audio-client] AI_INTEGRATIONS_OPENAI_BASE_URL / API_KEY not set — audio features disabled.");
 }
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_API_KEY must be set. Did you forget to provision the OpenAI AI integration?",
-  );
-}
-
-export const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+export const openai = (audioApiKey && audioBaseURL)
+  ? new OpenAI({ apiKey: audioApiKey, baseURL: audioBaseURL })
+  : null as any;
 
 export type AudioFormat = "wav" | "mp3" | "webm" | "mp4" | "ogg" | "unknown";
 

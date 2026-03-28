@@ -59,7 +59,7 @@ export default function Dashboard() {
               <img src={`${import.meta.env.BASE_URL}images/radar-scan.png`} className="absolute inset-0 w-full h-full opacity-30 animate-spin" style={{ animationDuration: '4s'}} alt="" />
             </div>
             <div>
-              <h1 className="text-3xl font-display font-bold text-white tracking-wider">Phish<span className="text-primary">Hunter</span>.AI</h1>
+              <h1 className="text-3xl font-display font-bold text-white tracking-wider">Net<span className="text-primary">Fender</span> AI</h1>
               <p className="text-sm font-mono text-muted-foreground">Real-time threat intelligence dashboard</p>
             </div>
           </div>

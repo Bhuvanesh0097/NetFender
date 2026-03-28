@@ -27,20 +27,22 @@ async function isDeviceConnected(): Promise<boolean> {
 }
 
 async function readSmsFromDevice(limit: number): Promise<{ address: string; body: string; date: number }[]> {
-  const columns = "address,body,date";
-  const sortOrder = "date DESC";
-  const limitClause = limit > 0 ? `LIMIT ${limit}` : "LIMIT 500";
-  const query = `content query --uri content://sms/inbox --projection ${columns} --sort "${sortOrder} ${limitClause}"`;
+  // Android 'content query' uses colons to separate projection columns, not commas.
+  // Wrap the full command in quotes so Windows passes it correctly to adb shell.
+  const cmd = `adb shell "content query --uri content://sms/inbox --projection address:body:date"`;
 
-  const { stdout } = await execAsync(`adb shell ${query}`);
+  const { stdout } = await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 });
   const lines = stdout.trim().split("\n");
   const messages: { address: string; body: string; date: number }[] = [];
 
   for (const line of lines) {
     if (!line.startsWith("Row:")) continue;
-    const addressMatch = line.match(/address=([^,]+)/);
-    const bodyMatch = line.match(/body=([^,]+(?:,[^=]+)*?)(?:, date=|$)/);
+
+    // Parse: Row: N address=..., body=..., date=...
+    const addressMatch = line.match(/address=([^,]*)/);
     const dateMatch = line.match(/date=(\d+)/);
+    // body can contain commas, so match everything between "body=" and ", date="
+    const bodyMatch = line.match(/body=(.*?)(?:, date=)/);
 
     const address = addressMatch?.[1]?.trim() ?? "Unknown";
     const body = bodyMatch?.[1]?.trim() ?? "";
@@ -51,7 +53,10 @@ async function readSmsFromDevice(limit: number): Promise<{ address: string; body
     }
   }
 
-  return messages;
+  // Sort by date descending and apply limit (since we can't rely on --sort in content query)
+  messages.sort((a, b) => b.date - a.date);
+  const effectiveLimit = limit > 0 ? limit : 500;
+  return messages.slice(0, effectiveLimit);
 }
 
 router.post("/test", async (req, res) => {
@@ -78,6 +83,39 @@ router.post("/test", async (req, res) => {
     });
   } catch (err: any) {
     res.status(400).json({ error: "Connection test failed", details: err?.message ?? String(err) });
+  }
+});
+
+// Read-only endpoint: fetches SMS from phone without analyzing
+router.post("/read", async (req, res) => {
+  const { limit = 50 } = req.body;
+  try {
+    const adbAvailable = await isAdbAvailable();
+    if (!adbAvailable) {
+      res.status(400).json({ error: "ADB not found. Ensure Android SDK tools are installed." });
+      return;
+    }
+
+    const deviceConnected = await isDeviceConnected();
+    if (!deviceConnected) {
+      res.status(400).json({
+        error: "No Android device detected. Connect your phone via USB with USB Debugging enabled.",
+      });
+      return;
+    }
+
+    const smsMessages = await readSmsFromDevice(limit);
+    res.json({
+      success: true,
+      messages: smsMessages.map((sms) => ({
+        content: sms.body,
+        sender: sms.address,
+        date: sms.date,
+      })),
+      count: smsMessages.length,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to read SMS", details: err?.message ?? String(err) });
   }
 });
 

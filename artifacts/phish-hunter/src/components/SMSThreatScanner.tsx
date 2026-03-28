@@ -76,86 +76,47 @@ export function SMSThreatScanner({ onNewResults }: { onNewResults?: () => void }
     }
   };
 
-  const handleReadFromPhone = () => {
+  const handleReadFromPhone = async () => {
     setProgress({ phase: "connecting", message: "Checking USB connection..." });
 
-    fetch("/api/sms/scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ limit: smsLimit }),
-    }).then(async (res) => {
-      if (!res.ok || !res.body) {
-        const err = await res.json().catch(() => ({ error: "Scan failed" }));
-        setProgress({ phase: "error", message: err.error || "Scan failed" });
+    try {
+      const res = await fetch("/api/sms/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: smsLimit }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setProgress({ phase: "error", message: data.error || "Failed to read SMS" });
         return;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      if (!data.messages || data.messages.length === 0) {
+        setProgress({ phase: "complete", message: "No SMS messages found in inbox." });
+        return;
+      }
 
-      const processChunk = async () => {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      // Populate the manual SMS queue with fetched messages
+      const fetchedSms: ManualSms[] = data.messages.map((msg: any, idx: number) => ({
+        id: `phone-${Date.now()}-${idx}`,
+        content: msg.content,
+      }));
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (line.startsWith("event: ")) continue;
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-
-                if (data.phase === "connecting") {
-                  setProgress({ phase: "connecting", message: data.message });
-                } else if (data.phase === "fetching") {
-                  setProgress(prev => ({
-                    ...prev,
-                    phase: "fetching",
-                    message: data.message || "Reading SMS from phone...",
-                    fetched: data.fetched,
-                    total: data.total,
-                  }));
-                } else if (data.phase === "analyzing") {
-                  setProgress(prev => ({
-                    ...prev,
-                    phase: "analyzing",
-                    message: "Analyzing SMS with AI...",
-                    analyzed: data.analyzed,
-                    total: data.total,
-                  }));
-                  if (data.message) {
-                    queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
-                    queryClient.invalidateQueries({ queryKey: getGetMessageStatsQueryKey() });
-                    onNewResults?.();
-                  }
-                } else if (data.summary) {
-                  setProgress({
-                    phase: "complete",
-                    message: `Scan complete! Analyzed ${data.summary.total} SMS messages.`,
-                    summary: data.summary,
-                  });
-                  queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
-                  queryClient.invalidateQueries({ queryKey: getGetMessageStatsQueryKey() });
-                  onNewResults?.();
-                } else if (data.message && !data.phase) {
-                  setProgress({ phase: "error", message: data.message });
-                }
-              } catch {}
-            }
-          }
-        }
-      };
-
-      processChunk().catch(() => {
-        setProgress({ phase: "error", message: "Connection to server lost during scan." });
+      setManualSmsQueue(fetchedSms);
+      setProgress({
+        phase: "complete",
+        message: `Successfully read ${data.messages.length} SMS from phone. Click "Scan SMS for Threats" to analyze.`,
       });
-    }).catch((err) => {
+
+      toast({
+        title: `${data.messages.length} SMS loaded from phone`,
+        description: "Now click \"Scan SMS for Threats\" to detect phishing.",
+      });
+    } catch (err: any) {
       setProgress({ phase: "error", message: err?.message || "Network error" });
-    });
+    }
   };
 
   const handlePasteAdd = () => {
